@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -38,7 +39,7 @@ func main() {
 	var goal [4][4]float64
 
 	for {
-		data := worker.GetData()
+		data := worker.GetData(context.Background())
 
 		goal[0][0] = data.Rot11
 		goal[0][1] = data.Rot12

@@ -33,13 +33,35 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("worker initialized at port: $d", worker.Port())
+	fmt.Println("worker initialized at port: $s", worker.Address())
 
 	var goal [4][4]float64
 
 	for {
+		data := worker.GetData()
+
+		goal[0][0] = data.Rot11
+		goal[0][1] = data.Rot12
+		goal[0][2] = data.Rot13
+
+		goal[1][0] = data.Rot21
+		goal[1][1] = data.Rot22
+		goal[1][2] = data.Rot23
+
+		goal[2][0] = data.Rot31
+		goal[2][1] = data.Rot32
+		goal[2][2] = data.Rot33
+
+		goal[0][3] = 0.0 // X translation
+		goal[1][3] = 0.0 // Y translation
+		goal[2][3] = 0.0 // Z translation
+
+		goal[3][0] = 0.0
+		goal[3][1] = 0.0
+		goal[3][2] = 0.0
+		goal[3][3] = 1.0
+
 		pub.Publish(goal)
-		fmt.Println("hello")
 	}
 
 }

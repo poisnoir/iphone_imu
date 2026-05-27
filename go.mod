@@ -2,6 +2,8 @@ module iphone-imu
 
 go 1.25.4
 
+require github.com/poisnoir/spine-go v0.0.0-20260512133115-196c9f2639d4
+
 require (
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
@@ -11,7 +13,6 @@ require (
 	github.com/miekg/dns v1.1.66 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/poisnoir/mad-go v0.0.0-20260213164930-5bea82a451d0 // indirect
-	github.com/poisnoir/spine-go v0.0.0-20260512133115-196c9f2639d4 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/xtaci/kcp-go/v5 v5.6.70 // indirect
 	golang.org/x/crypto v0.45.0 // indirect

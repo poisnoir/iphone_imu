@@ -32,7 +32,7 @@ func NewIphoneWorker(port int) (*IphoneWorker, error) {
 		addr: conn.LocalAddr().String(),
 	}
 	go worker.run()
-	return nil, nil
+	return worker, nil
 }
 
 func (iw *IphoneWorker) run() {

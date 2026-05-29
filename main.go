@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"math"
 	"os"
 
 	"github.com/poisnoir/spine-go"
@@ -43,26 +44,50 @@ func main() {
 	for {
 		data := worker.GetData(context.Background())
 
-		goal[0][0] = data.Rot11
-		goal[0][1] = data.Rot12
-		goal[0][2] = data.Rot13
+		ax := (data.GyroX * data.GyroTime / 1000) / 50000
+		ay := (data.GyroY * data.GyroTime / 1000) / 50000
+		az := (data.GyroZ * data.GyroTime / 1000) / 50000
 
-		goal[1][0] = data.Rot21
-		goal[1][1] = data.Rot22
-		goal[1][2] = data.Rot23
+		// Rotation angle (magnitude of the angle vector)
+		theta := math.Sqrt(ax*ax + ay*ay + az*az)
 
-		goal[2][0] = data.Rot31
-		goal[2][1] = data.Rot32
-		goal[2][2] = data.Rot33
+		// Unit axis of rotation
+		ux := ax / theta
+		uy := ay / theta
+		uz := az / theta
 
-		goal[0][3] = 0.0 // X translation
-		goal[1][3] = 0.0 // Y translation
-		goal[2][3] = 0.0 // Z translation
+		s := math.Sin(theta)
+		c := math.Cos(theta)
+		t := 1 - c
+
+		goal[0][0] = t*ux*ux + c
+		goal[0][1] = t*ux*uy - s*uz
+		goal[0][2] = t*ux*uz + s*uy
+
+		goal[1][0] = t*ux*uy + s*uz
+		goal[1][1] = t*uy*uy + c
+		goal[1][2] = t*uy*uz - s*ux
+
+		goal[2][0] = t*ux*uz - s*uy
+		goal[2][1] = t*uy*uz + s*ux
+		goal[2][2] = t*uz*uz + c
 
 		goal[3][0] = 0.0
 		goal[3][1] = 0.0
 		goal[3][2] = 0.0
 		goal[3][3] = 1.0
+
+		goal[0][3] = (data.AccelX * data.AccelTime / 1000) / 50000
+		goal[1][3] = (data.AccelY * data.AccelTime / 1000) / 50000
+		// goal[2][3] = (data.AccelZ*data.AccelTime/1000 + 86) / 10000
+
+		for _, row := range goal {
+			fmt.Printf("[ ")
+			for _, val := range row {
+				fmt.Printf("%5.1f ", val) // Adjust %5.1f to change spacing/decimals
+			}
+			fmt.Printf("]\n")
+		}
 
 		pub.Publish(goal)
 	}

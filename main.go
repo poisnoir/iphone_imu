@@ -1,12 +1,11 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"log/slog"
-	"math"
 	"os"
+	"time"
 
 	"github.com/poisnoir/spine-go"
 )
@@ -31,55 +30,72 @@ func main() {
 		panic(err)
 	}
 
-	worker, err := NewIphoneWorker(0)
-	if err != nil {
-		panic(err)
-	}
+	// worker, err := NewIphoneWorker(33047)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	// fmt.Println(worker)
-	fmt.Println("worker initialized at port: $s", worker.Address())
+	// fmt.Println("worker initialized at port: $s", worker.Address())
 
 	var goal [4][4]float64
 
 	for {
-		data := worker.GetData(context.Background())
+		// data := worker.GetData(context.Background())
 
-		ax := (data.GyroX * data.GyroTime / 1000) / 50000
-		ay := (data.GyroY * data.GyroTime / 1000) / 50000
-		az := (data.GyroZ * data.GyroTime / 1000) / 50000
+		// ax := (data.GyroX * data.GyroTime / 1000) / 50000
+		// ay := (data.GyroY * data.GyroTime / 1000) / 50000
+		// az := (data.GyroZ * data.GyroTime / 1000) / 50000
 
 		// Rotation angle (magnitude of the angle vector)
-		theta := math.Sqrt(ax*ax + ay*ay + az*az)
+		// theta := math.Sqrt(ax*ax + ay*ay + az*az)
 
 		// Unit axis of rotation
-		ux := ax / theta
-		uy := ay / theta
-		uz := az / theta
+		// ux := ax / theta
+		// uy := ay / theta
+		// uz := az / theta
 
-		s := math.Sin(theta)
-		c := math.Cos(theta)
-		t := 1 - c
+		// s := math.Sin(theta)
+		// c := math.Cos(theta)
+		// t := 1 - c
 
-		goal[0][0] = t*ux*ux + c
-		goal[0][1] = t*ux*uy - s*uz
-		goal[0][2] = t*ux*uz + s*uy
+		goal[0][0] = 1
+		// goal[0][0] = t*ux*ux + c
+		// goal[0][1] = t*ux*uy - s*uz
+		// goal[0][2] = t*ux*uz + s*uy
 
-		goal[1][0] = t*ux*uy + s*uz
-		goal[1][1] = t*uy*uy + c
-		goal[1][2] = t*uy*uz - s*ux
+		goal[1][1] = 1
+		// goal[1][0] = t*ux*uy + s*uz
+		// goal[1][1] = t*uy*uy + c
+		// goal[1][2] = t*uy*uz - s*ux
 
-		goal[2][0] = t*ux*uz - s*uy
-		goal[2][1] = t*uy*uz + s*ux
-		goal[2][2] = t*uz*uz + c
+		goal[2][2] = 1
+		// goal[2][0] = t*ux*uz - s*uy
+		// goal[2][1] = t*uy*uz + s*ux
+		// goal[2][2] = t*uz*uz + c
 
 		goal[3][0] = 0.0
 		goal[3][1] = 0.0
 		goal[3][2] = 0.0
 		goal[3][3] = 1.0
 
-		goal[0][3] = (data.AccelX * data.AccelTime / 1000) / 50000
-		goal[1][3] = (data.AccelY * data.AccelTime / 1000) / 50000
-		// goal[2][3] = (data.AccelZ*data.AccelTime/1000 + 86) / 10000
+		// goal[0][3] = (data.AccelX * data.AccelTime / 1000) / 500
+		// goal[1][3] = (data.AccelY * data.AccelTime / 1000) / 500
+		// goal[2][3] = (data.AccelZ*data.AccelTime/1000 + 86) / 500
+
+		// if goal[0][3] < 0.0001 {
+		// 	goal[0][3] = 0
+		// }
+
+		// if goal[1][3] < 0.0001 {
+		// 	goal[1][3] = 0
+		// }
+
+		// if goal[2][3] < 0.0001 {
+		// 	goal[2][3] = 0
+		// }
+
+		goal[1][3] = 0.0001
 
 		for _, row := range goal {
 			fmt.Printf("[ ")
@@ -88,6 +104,7 @@ func main() {
 			}
 			fmt.Printf("]\n")
 		}
+		time.Sleep(16 * time.Millisecond)
 
 		pub.Publish(goal)
 	}

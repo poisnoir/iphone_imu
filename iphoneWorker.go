@@ -39,8 +39,6 @@ func NewIphoneWorker(port int) (*IphoneWorker, error) {
 
 func (iw *IphoneWorker) run() {
 
-	fmt.Println("meow")
-
 	defer iw.conn.Close()
 	buffer := make([]byte, 4092)
 

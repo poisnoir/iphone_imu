@@ -1,5 +1,12 @@
 package main
 
+import (
+	"fmt"
+	"math"
+	"os"
+	"text/tabwriter"
+)
+
 type IphoneOutput struct {
 	Seq int64 `json:"seq"`
 
@@ -52,4 +59,101 @@ type IphoneOutput struct {
 	// Location
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
+}
+
+func (data *IphoneOutput) Print() {
+	// Initialize tabwriter to align columns with spaces
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+
+	fmt.Fprintln(w, "METRIC\tVALUE")
+	fmt.Fprintln(w, "------\t-----")
+	fmt.Fprintf(w, "Sequence\t%d\n", data.Seq)
+
+	fmt.Fprintln(w, "\n[Motion]\t")
+	fmt.Fprintf(w, "  Time\t%.4f\n", data.MotionTime)
+	fmt.Fprintf(w, "  Roll\t%.4f\n", data.Roll)
+	fmt.Fprintf(w, "  Pitch\t%.4f\n", data.Pitch)
+	fmt.Fprintf(w, "  Yaw\t%.4f\n", data.Yaw)
+
+	fmt.Fprintln(w, "\n[Quaternion]\t")
+	fmt.Fprintf(w, "  X / Y / Z / W\t%.4f, %.4f, %.4f, %.4f\n", data.QuatX, data.QuatY, data.QuatZ, data.QuatW)
+
+	fmt.Fprintln(w, "\n[Rotation Matrix]\t")
+	fmt.Fprintf(w, "  Row 1\t[%.3f, %.3f, %.3f]\n", data.Rot11, data.Rot12, data.Rot13)
+	fmt.Fprintf(w, "  Row 2\t[%.3f, %.3f, %.3f]\n", data.Rot21, data.Rot22, data.Rot23)
+	fmt.Fprintf(w, "  Row 3\t[%.3f, %.3f, %.3f]\n", data.Rot31, data.Rot32, data.Rot33)
+
+	fmt.Fprintln(w, "\n[Gravity]\t")
+	fmt.Fprintf(w, "  X / Y / Z\t%.4f, %.4f, %.4f\n", data.GravityX, data.GravityY, data.GravityZ)
+
+	fmt.Fprintln(w, "\n[Accelerometer]\t")
+	fmt.Fprintf(w, "  Time\t%.4f\n", data.AccelTime)
+	fmt.Fprintf(w, "  X / Y / Z\t%.4f, %.4f, %.4f\n", data.AccelX, data.AccelY, data.AccelZ)
+
+	fmt.Fprintln(w, "\n[Gyroscope]\t")
+	fmt.Fprintf(w, "  Time\t%.4f\n", data.GyroTime)
+	fmt.Fprintf(w, "  X / Y / Z\t%.4f, %.4f, %.4f\n", data.GyroX, data.GyroY, data.GyroZ)
+
+	fmt.Fprintln(w, "\n[Magnetometer]\t")
+	fmt.Fprintf(w, "  Time\t%.4f\n", data.MagTime)
+	fmt.Fprintf(w, "  X / Y / Z\t%.4f, %.4f, %.4f\n", data.MagX, data.MagY, data.MagZ)
+
+	fmt.Fprintln(w, "\n[Location]\t")
+	fmt.Fprintf(w, "  Latitude\t%.6f\n", data.Latitude)
+	fmt.Fprintf(w, "  Longitude\t%.6f\n", data.Longitude)
+
+	// Flush the buffer to print everything out perfectly aligned
+	w.Flush()
+}
+
+func (io *IphoneOutput) CreateDelta(prevState *IphoneOutput, result *[4][4]float64) {
+
+	result[3][3] = 1
+
+	var deltaYawSin, deltaYawCos float64
+	var deltaRollSin, deltaRollCos float64
+	var deltaPitchSin, deltaPitchCos float64
+
+	deltaYaw := io.Yaw - prevState.Yaw
+	// if deltaYaw < 1 && deltaYaw > -1 {
+	// 	deltaYaw = 0
+	// }
+
+	deltaRoll := io.Roll - prevState.Roll
+	// if deltaRoll < 1 && deltaRoll > -1 {
+	// 	deltaRoll = 0
+	// }
+
+	deltaPitch := io.Pitch - prevState.Pitch
+	// if deltaPitch < 1 && deltaPitch > -1 {
+	// 	deltaPitch = 0
+	// }
+
+	deltaYawSin, deltaYawCos = math.Sincos(degToRad(deltaYaw))
+	deltaRollSin, deltaRollCos = math.Sincos(degToRad(deltaRoll))
+	deltaPitchSin, deltaPitchCos = math.Sincos(degToRad(deltaPitch))
+
+	fmt.Println(deltaPitch)
+	fmt.Println(deltaRoll)
+	fmt.Println(deltaYaw)
+
+	// Rotation angle
+	result[0][0] = deltaYawCos * deltaPitchCos
+	result[0][1] = deltaYawSin * deltaPitchCos // <- Swapped from [1][0]
+	result[0][2] = -deltaPitchSin              // <- Swapped from [2][0]
+
+	// Row 1
+	result[1][0] = (deltaYawCos * deltaPitchSin * deltaRollSin) - (deltaYawSin * deltaRollCos) // <- Swapped from [0][1]
+	result[1][1] = (deltaYawSin * deltaPitchSin * deltaRollSin) + (deltaYawCos * deltaRollCos)
+	result[1][2] = deltaPitchCos * deltaRollSin // <- Swapped from [2][1]
+
+	// Row 2
+	result[2][0] = (deltaYawCos * deltaPitchSin * deltaRollCos) + (deltaYawSin * deltaRollSin) // <- Swapped from [0][2]
+	result[2][1] = (deltaYawSin * deltaPitchSin * deltaRollCos) - (deltaYawCos * deltaRollSin) // <- Swapped from [1][2]
+	result[2][2] = deltaPitchCos * deltaRollCos
+
+}
+
+func degToRad(deg float64) float64 {
+	return deg * (math.Pi / 180)
 }
